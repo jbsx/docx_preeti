@@ -1,0 +1,10 @@
+[package]
+name = "unicode_to_preeti_pt2"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+quick-xml = "0.31.0"
+zip = "0.6.6"
