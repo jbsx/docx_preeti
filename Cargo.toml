@@ -1,5 +1,5 @@
 [package]
-name = "unicode_to_preeti_pt2"
+name = "docx_preeti"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 quick-xml = "0.31.0"
+serde = {version="1.0.192", features = ["derive"]}
+serde_json = "1.0.108"
 zip = "0.6.6"

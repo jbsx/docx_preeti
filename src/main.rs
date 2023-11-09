@@ -20,24 +20,26 @@ fn main() -> Result<(), Box<dyn Error>> {
         .next()
         .unwrap();
 
+    //Unzip
     let tmp_dir: PathBuf = std::env::temp_dir().join("preeti_unicode").join(file_name);
-
-    //create temp dir
     let _ = fs::create_dir_all(&tmp_dir);
 
-    //Unzip
     let docx = fs::read(&args[1]).unwrap();
     let mut archive = zip::ZipArchive::new(Cursor::new(docx)).unwrap();
     let _ = archive.extract(&tmp_dir)?;
 
-    //zip
+    //Convert
+
+    //Zip
     let _ = zip_r(&tmp_dir, &std::env::current_dir()?);
 
     let _ = fs::remove_dir_all(tmp_dir);
+
     Ok(())
 }
 
 //Zip recursively
+#[allow(dead_code)]
 fn zip_r(dir: &PathBuf, out: &PathBuf) -> Result<(), Box<dyn Error>> {
     let file_name = dir.file_name().unwrap().to_str().unwrap();
     let file = File::create(out.join(format!("{}_unicode.docx", file_name)))?;

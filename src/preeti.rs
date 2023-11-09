@@ -1,5 +1,30 @@
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Map {
+    character_map: HashMap<String, String>,
+    post_rules: Vec<Vec<String>>,
+}
+
 pub fn convert(input: String) -> Result<String, Box<dyn std::error::Error>> {
-    Ok(String::from(input))
+    let file_path = PathBuf::from(std::env::current_dir()?.join("src").join("preeti.json"));
+    let map_string = fs::read_to_string(&file_path).unwrap();
+    let rules: Map = serde_json::from_str(&map_string)?;
+
+    let mut res = String::new();
+
+    for i in input.split("") {
+        res.push_str(rules.character_map.get(i).unwrap_or(&String::new()));
+    }
+
+    for i in rules.post_rules {
+        res = res.replace(&i[0], &i[1]);
+    }
+
+    Ok(res)
 }
 
 #[cfg(test)]
