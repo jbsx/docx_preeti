@@ -1,9 +1,13 @@
-mod lib;
+mod preeti;
 
 use std::error::Error;
 use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
+
+use quick_xml::events::{BytesText, Event};
+use quick_xml::reader::Reader;
+use quick_xml::writer::Writer;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
@@ -29,6 +33,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     let _ = archive.extract(&tmp_dir)?;
 
     //Convert
+    let file_string = fs::read_to_string(tmp_dir.join("word").join("document.xml"))?;
+    let mut reader = Reader::from_str(&file_string);
+    //reader.trim_text(true);
+    let mut writer = Writer::new(Cursor::new(Vec::new()));
+
+    loop {
+        match reader.read_event() {
+            //TODO
+            Ok(Event::Start(e)) if e.name().as_ref() == b"w:rFonts" => {}
+            Ok(Event::End(e)) if e.name().as_ref() == b"w:rFonts" => {}
+            Ok(Event::Text(e)) => {
+                let converted = preeti::preeti_to_unicode(e.unescape()?.to_string())?;
+
+                let elem = BytesText::new(&converted);
+
+                writer.write_event(Event::Text(elem))?;
+            }
+            Ok(Event::Eof) => break,
+            Ok(e) => assert!(writer.write_event(e).is_ok()),
+            Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
+        }
+    }
+
+    let converted_file = writer.into_inner().into_inner();
+    let mut new_file = fs::File::create(tmp_dir.join("word").join("document.xml"))?;
+    new_file.write_all(&converted_file)?;
 
     //Zip
     let _ = zip_r(&tmp_dir, &std::env::current_dir()?);
