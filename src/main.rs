@@ -1,4 +1,5 @@
 mod preeti;
+mod tests;
 
 use std::error::Error;
 use std::fs::{self, File};
