@@ -22,7 +22,7 @@ pub fn preeti_to_unicode(input: String) -> Result<String, Box<dyn std::error::Er
     //convert
     let mut res = String::new();
     for i in normalised_input.split("") {
-        res.push_str(rules.character_map.get(i).unwrap_or(&i.to_owned()));
+        res.push_str(rules.character_map.get(i).unwrap_or(&"".to_owned()));
     }
 
     //post rules

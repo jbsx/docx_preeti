@@ -6,7 +6,8 @@ use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
 
-use quick_xml::events::{BytesText, Event};
+use quick_xml::events::{BytesStart, BytesText, Event};
+use quick_xml::name::QName;
 use quick_xml::reader::Reader;
 use quick_xml::writer::Writer;
 
@@ -36,23 +37,50 @@ fn main() -> Result<(), Box<dyn Error>> {
     //Convert
     let file_string = fs::read_to_string(tmp_dir.join("word").join("document.xml"))?;
     let mut reader = Reader::from_str(&file_string);
-    //reader.trim_text(true);
     let mut writer = Writer::new(Cursor::new(Vec::new()));
+
+    let mut is_preeti = false;
 
     loop {
         match reader.read_event() {
-            //TODO
-            Ok(Event::Start(e)) if e.name().as_ref() == b"w:rFonts" => {}
-            Ok(Event::End(e)) if e.name().as_ref() == b"w:rFonts" => {}
             Ok(Event::Text(e)) => {
-                let converted = preeti::preeti_to_unicode(e.unescape()?.to_string())?;
+                if is_preeti {
+                    let converted = preeti::preeti_to_unicode(e.unescape()?.to_string())?;
+                    let elem = BytesText::new(&converted);
+                    writer.write_event(Event::Text(elem))?;
 
-                let elem = BytesText::new(&converted);
+                    is_preeti = false;
+                } else {
+                    writer.write_event(Event::Text(e))?;
+                }
+            }
+            Ok(Event::Empty(e)) => {
+                if &e.name() == &QName(b"w:rFonts") {
+                    let e_buf = &e.to_vec();
+                    let streeng = String::from_utf8_lossy(e_buf);
+                    if streeng.contains("w:ascii=\"Preeti\"") {
+                        is_preeti = true;
 
-                writer.write_event(Event::Text(elem))?;
+                        writer.write_event(Event::Empty(BytesStart::new(
+                            &streeng.replace("Preeti", "Arial"),
+                        )))?;
+                    } else {
+                        writer.write_event(Event::Empty(e))?;
+                    }
+                } else {
+                    writer.write_event(Event::Empty(e))?;
+                }
+            }
+            Ok(Event::End(e)) => {
+                if &e.name() == &QName(b"w:r") || &e.name() == &QName(b"w:pPr") {
+                    is_preeti = false;
+                }
+                writer.write_event(Event::End(e))?;
             }
             Ok(Event::Eof) => break,
-            Ok(e) => assert!(writer.write_event(e).is_ok()),
+            Ok(e) => {
+                writer.write_event(e)?;
+            }
             Err(e) => panic!("Error at position {}: {:?}", reader.buffer_position(), e),
         }
     }
