@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fs::{self, File};
 use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
+use std::str::FromStr;
 
 use quick_xml::events::{BytesStart, BytesText, Event};
 use quick_xml::name::QName;
@@ -14,8 +15,8 @@ use quick_xml::writer::Writer;
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
 
-    if args.len() < 2 {
-        panic!("input File name and output directory");
+    if args.len() < 3 {
+        panic!("Please provide path to the file and an output directory");
     }
 
     let file_name = &args[1]
@@ -90,7 +91,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     new_file.write_all(&converted_file)?;
 
     //Zip
-    let _ = zip_r(&tmp_dir, &std::env::current_dir()?);
+    let _ = zip_r(&tmp_dir, &PathBuf::from_str(&args[2])?);
 
     let _ = fs::remove_dir_all(tmp_dir);
 

@@ -1,0 +1,4 @@
+## USAGE
+```
+cargo run PATH_TO_FILE OUTPUT_DIRECTORY
+```
